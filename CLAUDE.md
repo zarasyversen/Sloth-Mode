@@ -16,7 +16,7 @@ Guiding principle for the code and the write-up: **MediaPipe sees, my code judge
 
 ## Current state
 
-Working prototype, split into `index.html`, `css/style.css` and ES modules in `js/` (`main.js` state/loop/judging/UI, `measure.js` landmark maths, `demo.js`, `audio.js`); the exercise library lives in `library.json` at the root. Run it with `python3 -m http.server` and open `http://localhost:8000/` (camera needs localhost or HTTPS).
+Working prototype, served from `public/`: `index.html`, `css/style.css` and ES modules in `js/` (`main.js` state/loop/judging/UI, `measure.js` landmark maths, `demo.js`, `audio.js`); the exercise library lives in `library.json` at the root. Run it with `npm start` (`node server.js`, needs Ollama with `gemma4:26b`) and open `http://localhost:8000/` (camera needs localhost or HTTPS).
 
 It already has:
 - Webcam + MediaPipe Pose Landmarker (tasks-vision 0.10.14, lite model, VIDEO mode)
