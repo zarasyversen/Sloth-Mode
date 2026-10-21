@@ -34,16 +34,16 @@ Known gaps: speed only, no smoothness/jerk metric yet. Thresholds are tuned by f
 
 1. **Project setup:** git repo, open-source license, README stub. Split the prototype into `index.html`, CSS and JS modules without changing behaviour.
 2. **Shared library:** move `LIBRARY` to `library.json`, used by both frontend and backend. Grow it to about 12 movements, each measurable with one angle or tilt (shoulder rolls, roll-down, torso rotation, knee lifts, lunge, cat-cow, lying knee drop). Each needs a `demo` figure.
-3. **Backend:** small server that serves the frontend and exposes:
+3. **Backend (Node, no dependencies):** small server that serves the frontend from `public/` (plus `/library.json`) and exposes:
    - `POST /api/plan` with `{ feeling, minutes }` returns `{ exercises: [{ id, seconds_per_lift, reps, why, cues[] }] }`, three options to pick from
    - `POST /api/reflect` with a session summary returns `{ reflection, next_time }`
    - Use structured output with a JSON schema; `id` must be an `enum` generated from `library.json` so Gemma can never invent an exercise we can't measure.
    - System prompt: gentle movements, pain-free range, warm and brief tone.
-4. **Switchable model provider:** one OpenAI-compatible code path configured by env vars (`MODEL_BASE_URL`, `MODEL_API_KEY`, `MODEL_NAME`). Default is local Ollama with Gemma (`http://localhost:11434/v1`). Cloud mode can point at Google AI Studio, OpenRouter or Groq. API keys stay server-side only.
+4. **Model: local only.** Gemma via the user's local Ollama (native `/api/chat` at `http://localhost:11434` with `format` for structured output and `think: false` for speed, model `gemma4:26b`), hardcoded in `coach.js`. No cloud providers, API keys or provider switch. The demo is a video recorded locally, not a deployment.
 5. **Frontend flow:** "How do you feel?" input, three exercise cards from `/api/plan`, then the climbing session using the chosen pace and cues, then a summary sent to `/api/reflect` and shown on the end screen.
 6. **Session summary:** compact data only, never video or raw landmarks: climbing time, rush count, nap count, where in the range the user tended to rush (for example "top third").
-7. **Polish if time allows:** smoothness metric, a hare on a neighbouring tree that sprints and falls asleep, deploy (e.g. Render) for cloud mode.
-8. **Write-up for DEV:** writing quality is weighted most. Cover why open matters (body data stays local, swappable model, no per-use cost), the "MediaPipe sees, code judges, Gemma coaches" architecture, and honest tradeoffs.
+7. **Polish if time allows:** smoothness metric, a hare on a neighbouring tree that sprints and falls asleep, no deploy.
+8. **Write-up for DEV:** writing quality is weighted most. Cover why open matters (body data stays local, swappable model (any Ollama model), no per-use cost, works offline), the "MediaPipe sees, code judges, Gemma coaches" architecture, and honest tradeoffs.
 
 ## Conventions
 
