@@ -96,7 +96,9 @@ function targetSpeed() {
 }
 function thresholds() {
   const t = targetSpeed();
-  return { nap: Math.max(2.5, t * 0.25), fast: t * 1.6, max: t * 2.4 };
+  // The 2.5°/s floor keeps landmark jitter from counting as movement, but it never goes above
+  // half the target, or slow paces on small-range movements could never climb.
+  return { nap: Math.min(Math.max(2.5, t * 0.25), t * 0.5), fast: t * 1.6, max: t * 2.4 };
 }
 function layoutMeter() {
   const { nap, fast, max } = thresholds();
