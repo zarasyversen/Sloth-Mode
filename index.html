@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sloth Mode</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Young+Serif&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Sloth Mode</h1>
+    <label>Exercise
+      <select id="exercise"></select>
+    </label>
+    <label>Seconds per lift
+      <input type="range" id="pace" min="4" max="20" step="1" value="10">
+      <span class="pace-value" id="paceValue">10</span>
+    </label>
+    <button id="sound" aria-pressed="true">Sound on</button>
+    <button id="reset">Reset climb</button>
+  </header>
+
+  <section class="stage" aria-label="Camera view">
+    <video id="video" playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <figure class="demo">
+      <svg viewBox="0 0 120 170" aria-hidden="true"><g id="demoBody"></g></svg>
+      <figcaption>Follow this pace</figcaption>
+    </figure>
+    <div class="empty" id="empty">
+      <p id="emptyText">Your camera feed appears here. Nothing is recorded or sent anywhere: the pose model runs in this browser tab.</p>
+      <button class="primary" id="start">Start camera</button>
+    </div>
+  </section>
+
+  <section class="status" aria-live="polite">
+    <div>
+      <p class="state" id="state" data-tone="idle">Ready when you are</p>
+      <p class="hint" id="hint">Start the camera, then step back until the camera sees you.</p>
+    </div>
+    <div class="meter-wrap">
+      <div class="meter" id="meter" aria-hidden="true">
+        <div class="z-nap" id="zNap"></div>
+        <div class="z-slow" id="zSlow"></div>
+        <div class="z-fast" id="zFast"></div>
+        <div class="marker" id="marker"></div>
+      </div>
+      <div class="meter-labels"><span>Still</span><span>Sloth pace</span><span>Rushing</span></div>
+      <div class="range" aria-hidden="true"><div class="range-fill" id="rangeFill"></div></div>
+      <div class="meter-labels"><span>Start position</span><span>Full movement</span></div>
+      <p class="readout" id="readout">Speed appears once the camera sees you.</p>
+    </div>
+  </section>
+
+  <section class="vine-panel" aria-label="Climbing progress">
+    <div class="vine-wrap" id="vineWrap">
+      <div class="vine-line"></div>
+      <div id="leaves"></div>
+      <svg class="canopy" viewBox="0 0 280 110" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 0 H280 V60 Q262 96 232 78 Q214 104 184 84 Q160 108 134 86 Q110 106 86 84 Q60 104 40 80 Q16 96 0 70 Z" fill="#6E9A5B"/>
+        <path d="M0 0 H280 V40 Q250 66 220 50 Q190 72 160 54 Q130 74 100 54 Q70 72 44 52 Q20 66 0 46 Z" fill="#88B26E"/>
+      </svg>
+      <div class="progress-label" id="progressLabel">Treetop</div>
+      <div class="sloth" id="sloth">
+        <svg viewBox="0 0 110 130" aria-hidden="true">
+          <path d="M37 64 Q38 34 51 8" stroke="#5E4A38" stroke-width="12" stroke-linecap="round" fill="none"/>
+          <path d="M73 64 Q72 34 59 10" stroke="#5E4A38" stroke-width="12" stroke-linecap="round" fill="none"/>
+          <path d="M49 4 q4 -3 8 1" stroke="#E9D8BE" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M57 6 q4 -3 8 1" stroke="#E9D8BE" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <ellipse cx="55" cy="92" rx="30" ry="32" fill="#8A6F55"/>
+          <path d="M33 112 Q44 124 53 114" stroke="#5E4A38" stroke-width="10" stroke-linecap="round" fill="none"/>
+          <path d="M77 112 Q66 124 57 114" stroke="#5E4A38" stroke-width="10" stroke-linecap="round" fill="none"/>
+          <circle cx="55" cy="62" r="25" fill="#8A6F55"/>
+          <ellipse cx="55" cy="65" rx="19" ry="16" fill="#E9D8BE"/>
+          <ellipse cx="46" cy="63" rx="7" ry="4" transform="rotate(-22 46 63)" fill="#5E4A38"/>
+          <ellipse cx="64" cy="63" rx="7" ry="4" transform="rotate(22 64 63)" fill="#5E4A38"/>
+          <g class="eye-open">
+            <circle cx="46" cy="62.5" r="2" fill="#17281F"/>
+            <circle cx="64" cy="62.5" r="2" fill="#17281F"/>
+          </g>
+          <g class="eye-closed">
+            <path d="M42.5 63 q3.5 2.5 7 0" stroke="#17281F" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <path d="M60.5 63 q3.5 2.5 7 0" stroke="#17281F" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          </g>
+          <ellipse cx="55" cy="69.5" rx="3.4" ry="2.3" fill="#3B2E22"/>
+          <path d="M50 74 Q55 78 60 74" stroke="#3B2E22" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <text class="zzz" x="84" y="40" fill="#E6EDDF" font-family="Young Serif, Georgia, serif" font-size="16">z z</text>
+        </svg>
+      </div>
+    </div>
+    <div class="done" id="done">
+      <h2>You reached the treetop</h2>
+      <p id="doneStats"></p>
+      <button class="primary" id="again">Climb again</button>
+    </div>
+  </section>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
