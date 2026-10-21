@@ -1,11 +1,22 @@
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-import { LIBRARY } from "./library.js";
 import { px, pointsFor, pickSide, isVisible, measure } from "./measure.js";
 import { startDemo } from "./demo.js";
 import { bindSoundButton, initAudio, updateTone, rustle } from "./audio.js";
 
 const REPS = 3;
 const $ = (id) => document.getElementById(id);
+
+let LIBRARY;
+try {
+  const res = await fetch("library.json");
+  if (!res.ok) throw new Error(`library.json: ${res.status}`);
+  LIBRARY = await res.json();
+  if (!Array.isArray(LIBRARY) || !LIBRARY.length) throw new Error("library.json: no exercises");
+} catch (err) {
+  $("emptyText").textContent = "The exercise library didn’t load. Run the app through a local server (see the README), then reload the page.";
+  $("start").hidden = true;
+  throw err;
+}
 const video = $("video");
 const canvas = $("overlay");
 const ctx = canvas.getContext("2d");
@@ -59,6 +70,7 @@ $("pace").addEventListener("input", (e) => {
 $("reset").addEventListener("click", resetClimb);
 $("again").addEventListener("click", resetClimb);
 $("start").addEventListener("click", start);
+$("start").disabled = false;
 bindSoundButton($("sound"));
 
 const leaves = $("leaves");

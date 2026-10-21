@@ -45,6 +45,7 @@ function squatFigure(knee) {
 export function startDemo(demoBody, getState) {
   const demoStart = performance.now();
   function demoFrame(now) {
+    requestAnimationFrame(demoFrame);
     const { exercise, secondsPerLift } = getState();
     const period = 2 * secondsPerLift * 1000;
     const cycle = (now - demoStart) / period;
@@ -57,8 +58,8 @@ export function startDemo(demoBody, getState) {
       bend: () => frontFigure(10, 10, (Math.floor(cycle) % 2 ? -1 : 1) * value, "torso"),
       squat: () => squatFigure(value)
     };
-    demoBody.innerHTML = figures[exercise.demo]();
-    requestAnimationFrame(demoFrame);
+    const figure = figures[exercise.demo];
+    demoBody.innerHTML = figure ? figure() : "";
   }
   requestAnimationFrame(demoFrame);
 }
