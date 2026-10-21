@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sloth Mode prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Young+Serif&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canopy: #17281F;
+  --leaf: #203528;
+  --moss: #2F4C3A;
+  --mist: #E6EDDF;
+  --lichen: #9FB39A;
+  --marigold: #F0B44C;
+  --orchid: #D49AC6;
+  --fur: #8A6F55;
+  --furdark: #5E4A38;
+  --face: #E9D8BE;
+  --serif: "Young Serif", Georgia, serif;
+  --sans: "Atkinson Hyperlegible", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--canopy);
+  color: var(--mist);
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.5;
+}
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "head head" "stage vine" "status vine";
+  gap: 18px 24px;
+  height: 100vh;
+  padding: 20px 24px 24px;
+}
+header {
+  grid-area: head;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 30px;
+  margin: 0 auto 0 0;
+  letter-spacing: 0.01em;
+}
+label { color: var(--lichen); font-size: 16px; display: flex; align-items: center; gap: 10px; }
+select, button {
+  font: inherit;
+  font-size: 16px;
+  color: var(--mist);
+  background: var(--leaf);
+  border: 1px solid var(--moss);
+  border-radius: 10px;
+  padding: 8px 14px;
+}
+button { cursor: pointer; }
+button.primary { background: var(--marigold); color: var(--canopy); border-color: var(--marigold); font-weight: 700; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
+input[type="range"] { accent-color: var(--marigold); width: 120px; }
+.pace-value { color: var(--mist); min-width: 3ch; }
+
+.stage {
+  grid-area: stage;
+  position: relative;
+  background: var(--leaf);
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 240px;
+}
+.stage video, .stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scaleX(-1);
+}
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 24px;
+}
+.empty p { max-width: 44ch; margin: 0; color: var(--lichen); }
+
+.status {
+  grid-area: status;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
+  gap: 8px 28px;
+  align-items: end;
+}
+.state {
+  font-family: var(--serif);
+  font-size: 44px;
+  line-height: 1.1;
+  margin: 0;
+}
+.state[data-tone="climbing"] { color: var(--marigold); }
+.state[data-tone="fast"] { color: var(--orchid); }
+.hint { margin: 6px 0 0; font-size: 21px; max-width: 52ch; min-height: 2lh; }
+.meter-wrap { display: flex; flex-direction: column; gap: 8px; }
+.meter { position: relative; height: 16px; display: flex; border-radius: 8px; overflow: hidden; }
+.meter .z-nap { background: var(--moss); }
+.meter .z-slow { background: var(--marigold); }
+.meter .z-fast { background: var(--orchid); opacity: 0.75; }
+.marker {
+  position: absolute;
+  top: -5px;
+  width: 4px;
+  height: 26px;
+  margin-left: -2px;
+  background: var(--mist);
+  border-radius: 2px;
+  left: 0;
+}
+.meter-labels { display: flex; justify-content: space-between; font-size: 14px; color: var(--lichen); }
+.readout { font-size: 14px; color: var(--lichen); margin: 0; }
+.range { height: 10px; margin-top: 6px; border-radius: 5px; background: var(--moss); overflow: hidden; }
+.range-fill { height: 100%; width: 0; background: var(--lichen); transition: width 0.1s linear; }
+.demo {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 2;
+  margin: 0;
+  width: 132px;
+  padding: 8px 8px 6px;
+  background: rgba(23, 40, 31, 0.85);
+  border: 1px solid var(--moss);
+  border-radius: 14px;
+  text-align: center;
+}
+.demo svg { display: block; width: 100%; height: auto; }
+.demo figcaption { font-size: 13px; color: var(--lichen); }
+
+.vine-panel {
+  grid-area: vine;
+  position: relative;
+  background: linear-gradient(var(--leaf), var(--canopy));
+  border-radius: 18px;
+  overflow: hidden;
+}
+.vine-wrap { position: absolute; inset: 0; transform-origin: 50% 0; }
+.vine-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 6px;
+  margin-left: -3px;
+  background: #4E6B45;
+  border-radius: 3px;
+}
+.leaf { position: absolute; width: 34px; height: 20px; }
+.canopy { position: absolute; top: -10px; left: 0; right: 0; height: 110px; }
+.progress-label {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--canopy);
+  z-index: 2;
+}
+.sloth {
+  --p: 0;
+  position: absolute;
+  left: 50%;
+  width: 110px;
+  height: 130px;
+  margin-left: -55px;
+  bottom: calc(var(--p) * (100% - 230px) + 10px);
+  transition: bottom 0.3s linear;
+}
+.sloth svg { width: 100%; height: 100%; overflow: visible; }
+.sloth .eye-closed, .sloth .zzz { display: none; }
+.sloth.napping .eye-open { display: none; }
+.sloth.napping .eye-closed, .sloth.napping .zzz { display: inline; }
+
+.done {
+  position: absolute;
+  inset: 0;
+  background: rgba(23, 40, 31, 0.92);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 24px;
+  z-index: 3;
+}
+.done.show { display: flex; }
+.done h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0; color: var(--marigold); }
+.done p { margin: 0; color: var(--lichen); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .sloth.climbing svg { animation: bob 1.8s ease-in-out infinite; }
+  .vine-wrap.swaying { animation: sway 1.4s ease-in-out infinite; }
+  .sloth.napping .zzz { animation: drift 2.4s ease-in-out infinite; }
+}
+@keyframes bob { 50% { transform: translateY(-5px); } }
+@keyframes sway { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(1.6deg); } 75% { transform: rotate(-1.6deg); } }
+@keyframes drift { 0% { opacity: 0; transform: translate(0, 4px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -10px); } }
+
+@media (max-width: 820px) {
+  .app {
+    height: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas: "head" "stage" "status" "vine";
+  }
+  .stage { aspect-ratio: 4 / 3; }
+  .status { grid-template-columns: 1fr; }
+  .vine-panel { height: 420px; }
+  .state { font-size: 36px; }
+}
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Sloth Mode</h1>
+    <label>Exercise
+      <select id="exercise"></select>
+    </label>
+    <label>Seconds per lift
+      <input type="range" id="pace" min="4" max="20" step="1" value="10">
+      <span class="pace-value" id="paceValue">10</span>
+    </label>
+    <button id="sound" aria-pressed="true">Sound on</button>
+    <button id="reset">Reset climb</button>
+  </header>
+
+  <section class="stage" aria-label="Camera view">
+    <video id="video" playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <figure class="demo">
+      <svg viewBox="0 0 120 170" aria-hidden="true"><g id="demoBody"></g></svg>
+      <figcaption>Follow this pace</figcaption>
+    </figure>
+    <div class="empty" id="empty">
+      <p id="emptyText">Your camera feed appears here. Nothing is recorded or sent anywhere: the pose model runs in this browser tab.</p>
+      <button class="primary" id="start">Start camera</button>
+    </div>
+  </section>
+
+  <section class="status" aria-live="polite">
+    <div>
+      <p class="state" id="state" data-tone="idle">Ready when you are</p>
+      <p class="hint" id="hint">Start the camera, then step back until the camera sees you.</p>
+    </div>
+    <div class="meter-wrap">
+      <div class="meter" id="meter" aria-hidden="true">
+        <div class="z-nap" id="zNap"></div>
+        <div class="z-slow" id="zSlow"></div>
+        <div class="z-fast" id="zFast"></div>
+        <div class="marker" id="marker"></div>
+      </div>
+      <div class="meter-labels"><span>Still</span><span>Sloth pace</span><span>Rushing</span></div>
+      <div class="range" aria-hidden="true"><div class="range-fill" id="rangeFill"></div></div>
+      <div class="meter-labels"><span>Start position</span><span>Full movement</span></div>
+      <p class="readout" id="readout">Speed appears once the camera sees you.</p>
+    </div>
+  </section>
+
+  <section class="vine-panel" aria-label="Climbing progress">
+    <div class="vine-wrap" id="vineWrap">
+      <div class="vine-line"></div>
+      <div id="leaves"></div>
+      <svg class="canopy" viewBox="0 0 280 110" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 0 H280 V60 Q262 96 232 78 Q214 104 184 84 Q160 108 134 86 Q110 106 86 84 Q60 104 40 80 Q16 96 0 70 Z" fill="#6E9A5B"/>
+        <path d="M0 0 H280 V40 Q250 66 220 50 Q190 72 160 54 Q130 74 100 54 Q70 72 44 52 Q20 66 0 46 Z" fill="#88B26E"/>
+      </svg>
+      <div class="progress-label" id="progressLabel">Treetop</div>
+      <div class="sloth" id="sloth">
+        <svg viewBox="0 0 110 130" aria-hidden="true">
+          <path d="M37 64 Q38 34 51 8" stroke="#5E4A38" stroke-width="12" stroke-linecap="round" fill="none"/>
+          <path d="M73 64 Q72 34 59 10" stroke="#5E4A38" stroke-width="12" stroke-linecap="round" fill="none"/>
+          <path d="M49 4 q4 -3 8 1" stroke="#E9D8BE" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M57 6 q4 -3 8 1" stroke="#E9D8BE" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <ellipse cx="55" cy="92" rx="30" ry="32" fill="#8A6F55"/>
+          <path d="M33 112 Q44 124 53 114" stroke="#5E4A38" stroke-width="10" stroke-linecap="round" fill="none"/>
+          <path d="M77 112 Q66 124 57 114" stroke="#5E4A38" stroke-width="10" stroke-linecap="round" fill="none"/>
+          <circle cx="55" cy="62" r="25" fill="#8A6F55"/>
+          <ellipse cx="55" cy="65" rx="19" ry="16" fill="#E9D8BE"/>
+          <ellipse cx="46" cy="63" rx="7" ry="4" transform="rotate(-22 46 63)" fill="#5E4A38"/>
+          <ellipse cx="64" cy="63" rx="7" ry="4" transform="rotate(22 64 63)" fill="#5E4A38"/>
+          <g class="eye-open">
+            <circle cx="46" cy="62.5" r="2" fill="#17281F"/>
+            <circle cx="64" cy="62.5" r="2" fill="#17281F"/>
+          </g>
+          <g class="eye-closed">
+            <path d="M42.5 63 q3.5 2.5 7 0" stroke="#17281F" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <path d="M60.5 63 q3.5 2.5 7 0" stroke="#17281F" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          </g>
+          <ellipse cx="55" cy="69.5" rx="3.4" ry="2.3" fill="#3B2E22"/>
+          <path d="M50 74 Q55 78 60 74" stroke="#3B2E22" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <text class="zzz" x="84" y="40" fill="#E6EDDF" font-family="Young Serif, Georgia, serif" font-size="16">z z</text>
+        </svg>
+      </div>
+    </div>
+    <div class="done" id="done">
+      <h2>You reached the treetop</h2>
+      <p id="doneStats"></p>
+      <button class="primary" id="again">Climb again</button>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+import { PoseLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+const LIBRARY = [
+  {
+    id: "side_arm_raise_left",
+    name: "Side arm raise, left arm",
+    demo: "armLeft",
+    measure: { type: "angle", points: [23, 11, 13] },
+    range: [20, 160],
+    setup: "Face the camera about two metres back so it sees your hips and hands.",
+    cues: [
+      "Let your arm float up as if it’s resting on water.",
+      "Notice the moment your arm starts to feel heavy.",
+      "Keep your shoulder soft and away from your ear.",
+      "Lower it as slowly as you raised it."
+    ]
+  },
+  {
+    id: "side_arm_raise_right",
+    name: "Side arm raise, right arm",
+    demo: "armRight",
+    measure: { type: "angle", points: [24, 12, 14] },
+    range: [20, 160],
+    setup: "Face the camera about two metres back so it sees your hips and hands.",
+    cues: [
+      "Let your arm float up as if it’s resting on water.",
+      "Feel your shoulder blade glide as the arm rises.",
+      "Breathe out as the arm comes down.",
+      "Lower it as slowly as you raised it."
+    ]
+  },
+  {
+    id: "side_bend",
+    name: "Standing side bend",
+    demo: "bend",
+    measure: { type: "tilt", from: [23, 24], to: [11, 12] },
+    range: [0, 20],
+    setup: "Face the camera, feet hip-width apart, arms by your sides. Slide one hand down the outside of your leg until you feel a stretch along your side, then rise back up. Switch sides each time, like the figure.",
+    cues: [
+      "Slide your hand down your leg like honey dripping.",
+      "Feel the long side of your body open.",
+      "Rise back to standing just as slowly.",
+      "Keep your hips still. Only your upper body leans."
+    ]
+  },
+  {
+    id: "slow_squat",
+    name: "Slow squat, side-on",
+    demo: "squat",
+    measure: { type: "angle", sides: { left: [23, 25, 27], right: [24, 26, 28] } },
+    range: [175, 95],
+    setup: "Stand side-on to the camera, either side works, so it sees your whole body from head to feet.",
+    cues: [
+      "Sit back as if a chair is very far away.",
+      "Feel your weight spread across your whole foot.",
+      "Rise like you’re being lifted by a thread.",
+      "No rush at the bottom. Pause there if you like."
+    ]
+  }
+];
+
+const REPS = 3;
+const $ = (id) => document.getElementById(id);
+const video = $("video");
+const canvas = $("overlay");
+const ctx = canvas.getContext("2d");
+const ui = {
+  state: $("state"), hint: $("hint"), readout: $("readout"), marker: $("marker"),
+  zNap: $("zNap"), zSlow: $("zSlow"), zFast: $("zFast"),
+  sloth: $("sloth"), vineWrap: $("vineWrap"), progressLabel: $("progressLabel"),
+  done: $("done"), doneStats: $("doneStats"), empty: $("empty"), emptyText: $("emptyText"),
+  rangeFill: $("rangeFill")
+};
+
+let landmarker = null;
+let drawing = null;
+let running = false;
+let lastVideoTime = -1;
+let lastFrame = 0;
+let exercise = LIBRARY[0];
+let secondsPerLift = 10;
+let smoothAngle = null;
+let history = [];
+let speed = 0;
+let shown = "idle";
+let candidate = null;
+let candidateSince = 0;
+let progress = 0;
+let climbTime = 0;
+let rushCount = 0;
+let finished = false;
+let cueIndex = 0;
+let cueChangedAt = 0;
+let lastReadout = 0;
+let activeSide = null;
+
+const select = $("exercise");
+LIBRARY.forEach((ex) => {
+  const opt = document.createElement("option");
+  opt.value = ex.id;
+  opt.textContent = ex.name;
+  select.append(opt);
+});
+select.addEventListener("change", () => {
+  exercise = LIBRARY.find((ex) => ex.id === select.value);
+  resetClimb();
+  if (running) setStatus("away", true);
+});
+$("pace").addEventListener("input", (e) => {
+  secondsPerLift = Number(e.target.value);
+  $("paceValue").textContent = secondsPerLift;
+  layoutMeter();
+});
+$("reset").addEventListener("click", resetClimb);
+$("again").addEventListener("click", resetClimb);
+$("start").addEventListener("click", start);
+
+const leaves = $("leaves");
+for (let i = 0; i < 9; i++) {
+  const leaf = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const right = i % 2 === 0;
+  leaf.setAttribute("viewBox", "0 0 34 20");
+  leaf.setAttribute("class", "leaf");
+  leaf.setAttribute("aria-hidden", "true");
+  leaf.style.top = `${18 + i * 9}%`;
+  leaf.style.left = right ? "calc(50% + 2px)" : "calc(50% - 36px)";
+  leaf.innerHTML = right
+    ? '<path d="M0 10 Q14 -4 34 8 Q16 22 0 10 Z" fill="#5F8A4E"/>'
+    : '<path d="M34 10 Q20 -4 0 8 Q18 22 34 10 Z" fill="#5F8A4E"/>';
+  leaves.append(leaf);
+}
+
+const demoBody = $("demoBody");
+const demoStart = performance.now();
+const rad = (d) => (d * Math.PI) / 180;
+const LIGHT = "#E6EDDF";
+const GOLD = "#F0B44C";
+function rot(p, c, deg) {
+  const r = rad(deg);
+  const dx = p[0] - c[0];
+  const dy = p[1] - c[1];
+  return [c[0] + dx * Math.cos(r) - dy * Math.sin(r), c[1] + dx * Math.sin(r) + dy * Math.cos(r)];
+}
+function seg(a, b, color = LIGHT, w = 5) {
+  return `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`;
+}
+function head(p) {
+  return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="9" fill="${LIGHT}"/>`;
+}
+function frontFigure(personLeftDeg, personRightDeg, tilt, active) {
+  const hip = [60, 92];
+  const up = { head: [60, 30], neck: [60, 46], shA: [76, 48], shB: [44, 48] };
+  for (const k in up) up[k] = rot(up[k], hip, tilt);
+  up.handA = [up.shA[0] + 38 * Math.sin(rad(personLeftDeg)), up.shA[1] + 38 * Math.cos(rad(personLeftDeg))];
+  up.handB = [up.shB[0] - 38 * Math.sin(rad(personRightDeg)), up.shB[1] + 38 * Math.cos(rad(personRightDeg))];
+  return seg([52, 94], [50, 158]) + seg([68, 94], [70, 158]) + seg([52, 94], [68, 94]) +
+    seg(hip, up.neck, active === "torso" ? GOLD : LIGHT) + seg(up.shB, up.shA) +
+    seg(up.shA, up.handA, active === "A" ? GOLD : LIGHT) +
+    seg(up.shB, up.handB, active === "B" ? GOLD : LIGHT) + head(up.head);
+}
+function squatFigure(knee) {
+  const a = (180 - knee) / 2;
+  const ankle = [70, 156];
+  const kneeP = [ankle[0] - 36 * Math.sin(rad(a)), ankle[1] - 36 * Math.cos(rad(a))];
+  const hipP = [kneeP[0] + 36 * Math.sin(rad(a * 1.4)), kneeP[1] - 36 * Math.cos(rad(a * 1.4))];
+  const lean = a * 0.7;
+  const shoulder = [hipP[0] - 44 * Math.sin(rad(lean)), hipP[1] - 44 * Math.cos(rad(lean))];
+  const headP = [hipP[0] - 60 * Math.sin(rad(lean)), hipP[1] - 60 * Math.cos(rad(lean))];
+  const reach = 15 + ((180 - knee) / 85) * 70;
+  const hand = [shoulder[0] - 34 * Math.sin(rad(reach)), shoulder[1] + 34 * Math.cos(rad(reach))];
+  return seg(ankle, [ankle[0] - 14, ankle[1]]) + seg(ankle, kneeP, GOLD) + seg(kneeP, hipP, GOLD) +
+    seg(hipP, shoulder) + seg(shoulder, hand) + head(headP);
+}
+function demoFrame(now) {
+  const period = 2 * secondsPerLift * 1000;
+  const cycle = (now - demoStart) / period;
+  const f = (1 - Math.cos(2 * Math.PI * (cycle % 1))) / 2;
+  const [s, e] = exercise.range;
+  const value = s + (e - s) * f;
+  const figures = {
+    armLeft: () => frontFigure(value, 15, 0, "A"),
+    armRight: () => frontFigure(15, value, 0, "B"),
+    bend: () => frontFigure(10, 10, (Math.floor(cycle) % 2 ? -1 : 1) * value, "torso"),
+    squat: () => squatFigure(value)
+  };
+  demoBody.innerHTML = figures[exercise.demo]();
+  requestAnimationFrame(demoFrame);
+}
+requestAnimationFrame(demoFrame);
+
+function targetSpeed() {
+  return Math.abs(exercise.range[1] - exercise.range[0]) / secondsPerLift;
+}
+function thresholds() {
+  const t = targetSpeed();
+  return { nap: Math.max(2.5, t * 0.25), fast: t * 1.6, max: t * 2.4 };
+}
+function layoutMeter() {
+  const { nap, fast, max } = thresholds();
+  ui.zNap.style.width = `${(nap / max) * 100}%`;
+  ui.zSlow.style.width = `${((fast - nap) / max) * 100}%`;
+  ui.zFast.style.width = `${((max - fast) / max) * 100}%`;
+}
+layoutMeter();
+
+const audio = { ctx: null, osc: null, gain: null, on: true };
+$("sound").addEventListener("click", (e) => {
+  audio.on = !audio.on;
+  e.currentTarget.setAttribute("aria-pressed", String(audio.on));
+  e.currentTarget.textContent = audio.on ? "Sound on" : "Sound off";
+  if (!audio.on && audio.gain) audio.gain.gain.setTargetAtTime(0, audio.ctx.currentTime, 0.1);
+});
+function initAudio() {
+  if (audio.ctx) return;
+  audio.ctx = new AudioContext();
+  audio.osc = audio.ctx.createOscillator();
+  audio.osc.type = "sine";
+  audio.gain = audio.ctx.createGain();
+  audio.gain.gain.value = 0;
+  audio.osc.connect(audio.gain).connect(audio.ctx.destination);
+  audio.osc.start();
+}
+function updateTone() {
+  if (!audio.ctx) return;
+  const now = audio.ctx.currentTime;
+  const on = audio.on && shown === "climbing" && !finished;
+  audio.gain.gain.setTargetAtTime(on ? 0.05 : 0, now, 0.25);
+  audio.osc.frequency.setTargetAtTime(196 * Math.pow(2, progress), now, 0.3);
+}
+function rustle() {
+  if (!audio.ctx || !audio.on) return;
+  const len = audio.ctx.sampleRate * 0.5;
+  const buffer = audio.ctx.createBuffer(1, len, audio.ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = audio.ctx.createBufferSource();
+  src.buffer = buffer;
+  const filter = audio.ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.frequency.value = 1400;
+  filter.Q.value = 0.8;
+  const g = audio.ctx.createGain();
+  g.gain.value = 0.12;
+  src.connect(filter).connect(g).connect(audio.ctx.destination);
+  src.start();
+}
+
+async function start() {
+  initAudio();
+  ui.emptyText.textContent = "Waking the sloth…";
+  $("start").hidden = true;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
+    video.srcObject = stream;
+    await video.play();
+  } catch (err) {
+    ui.emptyText.textContent = "Camera access was blocked. Allow camera access in your browser’s address bar, then press Start camera again.";
+    $("start").hidden = false;
+    return;
+  }
+  try {
+    if (!landmarker) {
+      const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+      landmarker = await PoseLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO",
+        numPoses: 1
+      });
+    }
+  } catch (err) {
+    ui.emptyText.textContent = "The pose model didn’t load. Check your internet connection, then reload the page.";
+    $("start").hidden = false;
+    return;
+  }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  drawing = new DrawingUtils(ctx);
+  ui.empty.hidden = true;
+  running = true;
+  lastFrame = performance.now();
+  setStatus("away", true);
+  requestAnimationFrame(loop);
+}
+
+function loop() {
+  if (!running) return;
+  const now = performance.now();
+  if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+    lastVideoTime = video.currentTime;
+    const result = landmarker.detectForVideo(video, now);
+    processFrame(result, now);
+  }
+  requestAnimationFrame(loop);
+}
+
+function px(lm) {
+  return { x: lm.x * canvas.width, y: lm.y * canvas.height };
+}
+function pointsFor(ex) {
+  if (ex.measure.type === "tilt") return [...ex.measure.from, ...ex.measure.to];
+  if (ex.measure.sides) return ex.measure.sides[activeSide ?? "left"];
+  return ex.measure.points;
+}
+function sideVisibility(landmarks, pts) {
+  return Math.min(...pts.map((i) => landmarks[i].visibility ?? 1));
+}
+function chooseSide(landmarks, ex) {
+  if (!ex.measure.sides) return;
+  const left = sideVisibility(landmarks, ex.measure.sides.left);
+  const right = sideVisibility(landmarks, ex.measure.sides.right);
+  const best = right > left ? "right" : "left";
+  if (activeSide === null || (best !== activeSide && Math.abs(right - left) > 0.25)) {
+    if (activeSide !== null) {
+      smoothAngle = null;
+      history = [];
+    }
+    activeSide = best;
+  }
+}
+function isVisible(landmarks, ex) {
+  return pointsFor(ex).every((i) => (landmarks[i].visibility ?? 1) > 0.5);
+}
+function angleAt(a, b, c) {
+  const v1 = { x: a.x - b.x, y: a.y - b.y };
+  const v2 = { x: c.x - b.x, y: c.y - b.y };
+  const cos = (v1.x * v2.x + v1.y * v2.y) / (Math.hypot(v1.x, v1.y) * Math.hypot(v2.x, v2.y));
+  return (Math.acos(Math.min(1, Math.max(-1, cos))) * 180) / Math.PI;
+}
+function measure(landmarks, ex) {
+  if (ex.measure.type === "angle") {
+    const [a, b, c] = pointsFor(ex).map((i) => px(landmarks[i]));
+    return angleAt(a, b, c);
+  }
+  const mid = (i, j) => {
+    const p = px(landmarks[i]);
+    const q = px(landmarks[j]);
+    return { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+  };
+  const hip = mid(...ex.measure.from);
+  const shoulder = mid(...ex.measure.to);
+  return Math.abs((Math.atan2(shoulder.x - hip.x, hip.y - shoulder.y) * 180) / Math.PI);
+}
+
+function toneColor() {
+  return shown === "climbing" ? "#F0B44C" : shown === "fast" ? "#D49AC6" : "#9FB39A";
+}
+function draw(landmarks) {
+  drawing.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { color: "rgba(230, 237, 223, 0.45)", lineWidth: 3 });
+  const pts = pointsFor(exercise).map((i) => px(landmarks[i]));
+  ctx.strokeStyle = toneColor();
+  ctx.lineWidth = 7;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  if (exercise.measure.type === "angle") {
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.lineTo(pts[2].x, pts[2].y);
+  } else {
+    const hip = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+    const sh = { x: (pts[2].x + pts[3].x) / 2, y: (pts[2].y + pts[3].y) / 2 };
+    ctx.moveTo(hip.x, hip.y);
+    ctx.lineTo(sh.x, sh.y);
+  }
+  ctx.stroke();
+  ctx.fillStyle = toneColor();
+  pts.forEach((p) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function settle(raw, now) {
+  if (raw === shown) {
+    candidate = null;
+    return;
+  }
+  if (raw !== candidate) {
+    candidate = raw;
+    candidateSince = now;
+  }
+  const wait = { fast: 250, napping: 1200, climbing: 300, away: 600 }[raw] ?? 300;
+  if (now - candidateSince >= wait) {
+    if (raw === "fast" && shown !== "fast") {
+      rushCount++;
+      rustle();
+    }
+    setStatus(raw);
+    candidate = null;
+  }
+}
+
+function processFrame(result, now) {
+  const dt = Math.min(0.1, (now - lastFrame) / 1000);
+  lastFrame = now;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const landmarks = result.landmarks && result.landmarks[0];
+  let raw;
+  let angle = null;
+  if (landmarks) chooseSide(landmarks, exercise);
+
+  if (!landmarks || !isVisible(landmarks, exercise)) {
+    raw = "away";
+    smoothAngle = null;
+    history = [];
+    speed = 0;
+    if (landmarks) drawing.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, { color: "rgba(230, 237, 223, 0.25)", lineWidth: 2 });
+  } else {
+    angle = measure(landmarks, exercise);
+    smoothAngle = smoothAngle === null ? angle : smoothAngle + 0.25 * (angle - smoothAngle);
+    history.push({ t: now, a: smoothAngle });
+    while (history.length && now - history[0].t > 1000) history.shift();
+    const past = history.find((h) => now - h.t <= 500);
+    const span = past ? (now - past.t) / 1000 : 0;
+    speed = span > 0.15 ? Math.abs(smoothAngle - past.a) / span : 0;
+    const { nap, fast } = thresholds();
+    raw = speed < nap ? "napping" : speed > fast ? "fast" : "climbing";
+    draw(landmarks);
+  }
+
+  settle(raw, now);
+
+  if (shown === "climbing" && !finished) {
+    const totalClimbSeconds = REPS * 2 * secondsPerLift;
+    progress = Math.min(1, progress + (dt * Math.min(speed / targetSpeed(), 1.25)) / totalClimbSeconds);
+    climbTime += dt;
+    if (progress >= 1) finish();
+  }
+
+  if (shown === "climbing" && now - cueChangedAt > 8000) {
+    cueIndex = (cueIndex + 1) % exercise.cues.length;
+    cueChangedAt = now;
+    ui.hint.textContent = exercise.cues[cueIndex];
+  }
+
+  ui.sloth.style.setProperty("--p", progress.toFixed(4));
+  ui.progressLabel.textContent = progress > 0 ? `${Math.round(progress * 100)}%` : "Treetop";
+  const { max } = thresholds();
+  ui.marker.style.left = `${Math.min(1, speed / max) * 100}%`;
+  const [rs, re] = exercise.range;
+  const through = smoothAngle === null ? 0 : Math.min(1, Math.max(0, (smoothAngle - rs) / (re - rs)));
+  ui.rangeFill.style.width = `${through * 100}%`;
+  if (now - lastReadout > 150) {
+    lastReadout = now;
+    const side = exercise.measure.sides && activeSide ? `Tracking your ${activeSide} leg. ` : "";
+    ui.readout.textContent = angle === null
+      ? "Speed appears once the camera sees you."
+      : `${side}${Math.round(speed)}°/s now, sloth pace is about ${Math.round(targetSpeed())}°/s.`;
+  }
+  updateTone();
+}
+
+function setStatus(next, force = false) {
+  if (next === shown && !force) return;
+  shown = next;
+  ui.state.dataset.tone = next;
+  ui.sloth.classList.toggle("climbing", next === "climbing" && !finished);
+  ui.sloth.classList.toggle("napping", next === "napping" && !finished);
+  ui.vineWrap.classList.toggle("swaying", next === "fast" && !finished);
+  if (finished) return;
+  const copy = {
+    away: ["Step into view", exercise.setup],
+    napping: ["Napping", "Keep moving, just slowly. The sloth only climbs while you move."],
+    climbing: ["Climbing", exercise.cues[cueIndex]],
+    fast: ["Too quick", "The sloth is holding on. Slow down and it will climb again."]
+  }[next];
+  if (!copy) return;
+  ui.state.textContent = copy[0];
+  ui.hint.textContent = copy[1];
+  if (next === "climbing") cueChangedAt = performance.now();
+}
+
+function finish() {
+  finished = true;
+  const mins = Math.floor(climbTime / 60);
+  const secs = String(Math.round(climbTime % 60)).padStart(2, "0");
+  ui.doneStats.textContent = `${mins}:${secs} of slow climbing. You rushed ${rushCount} ${rushCount === 1 ? "time" : "times"}.`;
+  ui.done.classList.add("show");
+  ui.state.textContent = "Treetop reached";
+  ui.state.dataset.tone = "climbing";
+  ui.hint.textContent = "Take a breath. Notice how your body feels now.";
+  ui.sloth.classList.remove("climbing", "napping");
+  ui.vineWrap.classList.remove("swaying");
+}
+
+function resetClimb() {
+  progress = 0;
+  climbTime = 0;
+  rushCount = 0;
+  finished = false;
+  smoothAngle = null;
+  history = [];
+  cueIndex = 0;
+  activeSide = null;
+  ui.done.classList.remove("show");
+  ui.sloth.style.setProperty("--p", "0");
+  ui.progressLabel.textContent = "Treetop";
+  layoutMeter();
+  if (running) setStatus(shown, true);
+}
+</script>
+</body>
+</html>
