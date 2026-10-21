@@ -63,5 +63,141 @@
       "Rise like you’re being lifted by a thread.",
       "No rush at the bottom. Pause there if you like."
     ]
+  },
+  {
+    "id": "arms_overhead",
+    "name": "Both arms float overhead",
+    "position": "standing",
+    "focus": ["shoulders", "arms"],
+    "demo": "armsBoth",
+    "measure": { "type": "angle", "sides": { "left": [23, 11, 13], "right": [24, 12, 14] } },
+    "tracks": "arm",
+    "range": [20, 160],
+    "setup": "Face the camera about two metres back so it sees your hips and hands. Raise both arms out to the sides together.",
+    "cues": [
+      "Breathe in as your arms float up.",
+      "Let your arms feel wide, like wings.",
+      "Keep your neck long and your shoulders low.",
+      "Breathe out slowly as your arms drift down."
+    ]
+  },
+  {
+    "id": "front_arm_raise",
+    "name": "Forward arm raise, side-on",
+    "position": "standing",
+    "focus": ["shoulders", "arms"],
+    "demo": "armForward",
+    "measure": { "type": "angle", "sides": { "left": [23, 11, 13], "right": [24, 12, 14] }, "pick": "moving" },
+    "tracks": "arm",
+    "range": [20, 160],
+    "setup": "Stand side-on to the camera and raise the arm nearest to it, straight out in front of you. The camera needs to see your hip, shoulder and hand.",
+    "cues": [
+      "Reach forward as if you’re offering something.",
+      "Let your arm rise towards the ceiling, only as far as feels easy.",
+      "Keep your ribs soft. Don’t lean back.",
+      "Let the arm sink down slowly, like a feather."
+    ]
+  },
+  {
+    "id": "knee_lift",
+    "name": "Slow knee lift, side-on",
+    "position": "standing",
+    "focus": ["hips", "legs"],
+    "demo": "kneeLift",
+    "measure": { "type": "angle", "sides": { "left": [11, 23, 25], "right": [12, 24, 26] }, "pick": "moving" },
+    "tracks": "leg",
+    "range": [175, 95],
+    "setup": "Stand side-on to the camera and lift the knee nearest to it. Rest a hand on a chair or wall if you want to.",
+    "cues": [
+      "Let your knee drift up as if a string is pulling it.",
+      "Stay tall through the standing leg.",
+      "Lift only as high as your hip likes.",
+      "Lower your foot to the floor without a sound."
+    ]
+  },
+  {
+    "id": "heel_to_seat",
+    "name": "Standing heel to seat, side-on",
+    "position": "standing",
+    "focus": ["legs"],
+    "demo": "heelCurl",
+    "measure": { "type": "angle", "sides": { "left": [23, 25, 27], "right": [24, 26, 28] }, "pick": "moving" },
+    "tracks": "leg",
+    "range": [175, 60],
+    "setup": "Stand side-on to the camera with a hand on a chair or wall. Bend the knee nearest to the camera to bring that heel towards your seat.",
+    "cues": [
+      "Let your heel float back towards your seat.",
+      "Keep your knees side by side.",
+      "Feel the front of your thigh lengthen.",
+      "Let your foot come down gently, like it’s landing on grass."
+    ]
+  },
+  {
+    "id": "roll_down",
+    "name": "Standing roll-down, side-on",
+    "position": "standing",
+    "focus": ["spine", "legs"],
+    "demo": "rollDown",
+    "measure": { "type": "angle", "sides": { "left": [11, 23, 25], "right": [12, 24, 26] } },
+    "tracks": "side",
+    "range": [175, 80],
+    "setup": "Stand side-on to the camera, knees soft. Let your chin drop and roll down one vertebra at a time, then roll back up. The camera needs to see your shoulders, hips and knees.",
+    "cues": [
+      "Let your head be heavy and lead the way down.",
+      "Peel your spine down one bone at a time.",
+      "Keep your knees soft. Your hands just hang.",
+      "Stack yourself back up, head last."
+    ]
+  },
+  {
+    "id": "lunge",
+    "name": "Slow lunge, side-on",
+    "position": "standing",
+    "focus": ["legs", "hips"],
+    "demo": "lunge",
+    "measure": { "type": "angle", "sides": { "left": [23, 25, 27], "right": [24, 26, 28] } },
+    "tracks": "leg",
+    "range": [170, 100],
+    "setup": "Stand side-on to the camera with one foot a big step in front of the other. Lower straight down, then rise back up. The camera needs to see you from head to feet.",
+    "cues": [
+      "Sink straight down, like an elevator.",
+      "Keep your front knee over your ankle.",
+      "Only go as low as feels steady.",
+      "Rise up slowly, pressing through both feet."
+    ]
+  },
+  {
+    "id": "childs_pose_rock",
+    "name": "Rock back to child’s pose",
+    "position": "floor",
+    "focus": ["spine", "hips"],
+    "demo": "childsPose",
+    "measure": { "type": "angle", "sides": { "left": [11, 23, 25], "right": [12, 24, 26] } },
+    "tracks": "side",
+    "range": [90, 45],
+    "setup": "Put the camera low and side-on to you. Kneel on all fours with your hands under your shoulders. Rock your hips back towards your heels, then forward again.",
+    "cues": [
+      "Let your hips drift back towards your heels.",
+      "Keep your hands where they are and let your arms lengthen.",
+      "Breathe into your back as it rounds.",
+      "Come forward slowly, like the tide coming in."
+    ]
+  },
+  {
+    "id": "bridge",
+    "name": "Slow bridge, lying down",
+    "position": "floor",
+    "focus": ["hips", "spine"],
+    "demo": "bridge",
+    "measure": { "type": "angle", "sides": { "left": [11, 23, 25], "right": [12, 24, 26] } },
+    "tracks": "side",
+    "range": [130, 170],
+    "setup": "Put the camera low and side-on to you. Lie on your back with knees bent and feet flat, arms by your sides. Lift your hips, then lower them back down.",
+    "cues": [
+      "Press gently through your feet and let your hips rise.",
+      "Peel your back off the floor one bone at a time.",
+      "Lift only until your body is a long line.",
+      "Lower your spine back down slowly, as if setting down something precious."
+    ]
   }
 ]

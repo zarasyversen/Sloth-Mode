@@ -49,6 +49,7 @@ let cueIndex = 0;
 let cueChangedAt = 0;
 let lastReadout = 0;
 let activeSide = null;
+let sideHistory = { left: [], right: [] };
 
 const select = $("exercise");
 LIBRARY.forEach((ex) => {
@@ -156,14 +157,28 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-function chooseSide(landmarks, ex) {
-  const next = pickSide(landmarks, ex, activeSide);
+function switchSide(next) {
   if (next === activeSide) return;
   if (activeSide !== null) {
     smoothAngle = null;
     history = [];
   }
   activeSide = next;
+}
+function chooseSide(landmarks, ex) {
+  switchSide(pickSide(landmarks, ex, activeSide));
+}
+// For one-limb movements ("pick": "moving"), follow the side whose angle has changed most
+// over the last 3 s, so a still, well-visible limb can't hold the tracking.
+function followMovingSide(landmarks, ex, now) {
+  for (const side of ["left", "right"]) {
+    const h = sideHistory[side];
+    if (isVisible(landmarks, ex, side)) h.push({ t: now, a: measure(landmarks, ex, side, canvas.width, canvas.height) });
+    while (h.length && now - h[0].t > 3000) h.shift();
+  }
+  const span = (h) => (h.length ? Math.max(...h.map((p) => p.a)) - Math.min(...h.map((p) => p.a)) : 0);
+  const other = activeSide === "left" ? "right" : "left";
+  if (span(sideHistory[other]) > span(sideHistory[activeSide]) + 15) switchSide(other);
 }
 
 function toneColor() {
@@ -223,6 +238,7 @@ function processFrame(result, now) {
   let raw;
   let angle = null;
   if (landmarks) chooseSide(landmarks, exercise);
+  if (landmarks && exercise.measure.pick === "moving") followMovingSide(landmarks, exercise, now);
 
   if (!landmarks || !isVisible(landmarks, exercise, activeSide)) {
     raw = "away";
@@ -267,7 +283,7 @@ function processFrame(result, now) {
   ui.rangeFill.style.width = `${through * 100}%`;
   if (now - lastReadout > 150) {
     lastReadout = now;
-    const side = exercise.measure.sides && activeSide ? `Tracking your ${activeSide} leg. ` : "";
+    const side = exercise.measure.sides && activeSide ? `Tracking your ${activeSide} ${exercise.tracks ?? "side"}. ` : "";
     ui.readout.textContent = angle === null
       ? "Speed appears once the camera sees you."
       : `${side}${Math.round(speed)}°/s now, sloth pace is about ${Math.round(targetSpeed())}°/s.`;
@@ -317,6 +333,7 @@ function resetClimb() {
   history = [];
   cueIndex = 0;
   activeSide = null;
+  sideHistory = { left: [], right: [] };
   ui.done.classList.remove("show");
   ui.sloth.style.setProperty("--p", "0");
   ui.progressLabel.textContent = "Treetop";

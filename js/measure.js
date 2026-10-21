@@ -12,8 +12,10 @@ function sideVisibility(landmarks, pts) {
   return Math.min(...pts.map((i) => landmarks[i].visibility ?? 1));
 }
 // Returns the side to track. Only switches away from `current` when the other side is clearly more visible.
+// With "pick": "moving" the first choice is by visibility; after that main.js follows the moving side.
 export function pickSide(landmarks, ex, current) {
   if (!ex.measure.sides) return current;
+  if (ex.measure.pick === "moving" && current !== null) return current;
   const left = sideVisibility(landmarks, ex.measure.sides.left);
   const right = sideVisibility(landmarks, ex.measure.sides.right);
   const best = right > left ? "right" : "left";

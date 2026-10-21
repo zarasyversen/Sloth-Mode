@@ -24,17 +24,17 @@ Open <http://localhost:8000>. The camera only works on `localhost` or HTTPS.
 
 ```
 index.html       markup
+library.json     exercise library (shared with the backend)
 css/style.css    styles and design tokens
 js/main.js       camera, pose loop, judging, UI
 js/measure.js    landmark maths (angles, tilt, side picking)
-js/library.js    exercise library
 js/demo.js       animated stick-figure demo
 js/audio.js      climbing tone and rustle
 ```
 
 ## Status
 
-Working prototype with four exercises. Backend, Gemma planning and session reflection are in progress.
+Working prototype with twelve exercises. Backend, Gemma planning and session reflection are in progress.
 
 ## License
 

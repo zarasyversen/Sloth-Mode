@@ -16,11 +16,11 @@ Guiding principle for the code and the write-up: **MediaPipe sees, my code judge
 
 ## Current state
 
-Working prototype, split into `index.html`, `css/style.css` and ES modules in `js/` (`main.js` state/loop/judging/UI, `measure.js` landmark maths, `library.js`, `demo.js`, `audio.js`). Run it with `python3 -m http.server` and open `http://localhost:8000/` (camera needs localhost or HTTPS).
+Working prototype, split into `index.html`, `css/style.css` and ES modules in `js/` (`main.js` state/loop/judging/UI, `measure.js` landmark maths, `demo.js`, `audio.js`); the exercise library lives in `library.json` at the root. Run it with `python3 -m http.server` and open `http://localhost:8000/` (camera needs localhost or HTTPS).
 
 It already has:
 - Webcam + MediaPipe Pose Landmarker (tasks-vision 0.10.14, lite model, VIDEO mode)
-- `LIBRARY` array with four exercises: side arm raise (left, right), standing side bend, slow squat side-on
+- `library.json` with 12 exercises (10 standing, 2 on the floor), fetched at startup. Each one has `id`, `name`, `position` (standing/floor), `focus` tags, `demo` key, `measure`, `range`, optional `tracks` (arm/leg/side, for the readout), `setup` and four `cues`
 - Measurement types: `angle` (three landmarks; optional `sides` with auto-pick of the more visible side) and `tilt` (hip midpoint to shoulder midpoint)
 - `range: [start, end]` in degrees (end can be lower than start, as in the squat)
 - Smoothed angle, speed over a 0.5 s window, thresholds relative to target speed (`range / secondsPerLift`), state hysteresis (fast 250 ms, napping 1200 ms)
