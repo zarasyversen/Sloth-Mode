@@ -2,8 +2,10 @@ import { PoseLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdel
 import { px, pointsFor, pickSide, isVisible, measure } from "./measure.js";
 import { startDemo } from "./demo.js";
 import { bindSoundButton, initAudio, updateTone, rustle } from "./audio.js";
+import { initPlanner } from "./planner.js";
+import { postJson } from "./api.js";
 
-const REPS = 3;
+const DEFAULT_REPS = 3;
 const $ = (id) => document.getElementById(id);
 
 let LIBRARY;
@@ -13,6 +15,8 @@ try {
   LIBRARY = await res.json();
   if (!Array.isArray(LIBRARY) || !LIBRARY.length) throw new Error("library.json: no exercises");
 } catch (err) {
+  $("planForm").hidden = true;
+  $("cameraStep").hidden = false;
   $("emptyText").textContent = "The exercise library didn’t load. Run the app through a local server (see the README), then reload the page.";
   $("start").hidden = true;
   throw err;
@@ -25,7 +29,8 @@ const ui = {
   zNap: $("zNap"), zSlow: $("zSlow"), zFast: $("zFast"),
   sloth: $("sloth"), vineWrap: $("vineWrap"), progressLabel: $("progressLabel"),
   done: $("done"), doneStats: $("doneStats"), empty: $("empty"), emptyText: $("emptyText"),
-  rangeFill: $("rangeFill")
+  rangeFill: $("rangeFill"), stage: $("stage"), cameraStep: $("cameraStep"), chosenName: $("chosenName"),
+  reflection: $("reflection"), nextTime: $("nextTime")
 };
 
 let landmarker = null;
@@ -35,6 +40,10 @@ let lastVideoTime = -1;
 let lastFrame = 0;
 let exercise = LIBRARY[0];
 let secondsPerLift = 10;
+let reps = DEFAULT_REPS;
+let cues = exercise.cues;
+let planning = true;
+let reflectToken = 0;
 let smoothAngle = null;
 let history = [];
 let speed = 0;
@@ -60,6 +69,8 @@ LIBRARY.forEach((ex) => {
 });
 select.addEventListener("change", () => {
   exercise = LIBRARY.find((ex) => ex.id === select.value);
+  reps = DEFAULT_REPS;
+  cues = exercise.cues;
   resetClimb();
   if (running) setStatus("away", true);
 });
@@ -70,6 +81,7 @@ $("pace").addEventListener("input", (e) => {
 });
 $("reset").addEventListener("click", resetClimb);
 $("again").addEventListener("click", resetClimb);
+$("planAgain").addEventListener("click", backToPlanning);
 $("start").addEventListener("click", start);
 $("start").disabled = false;
 bindSoundButton($("sound"));
@@ -90,6 +102,50 @@ for (let i = 0; i < 9; i++) {
 }
 
 startDemo($("demoBody"), () => ({ exercise, secondsPerLift }));
+
+const planner = initPlanner({
+  library: LIBRARY,
+  onChoose: beginSession,
+  onSkip: () => beginSession({ exercise, secondsPerLift, reps: DEFAULT_REPS, cues: exercise.cues })
+});
+
+// Set up a session from Gemma’s card (or the current manual choice), then go to the camera.
+function beginSession(session) {
+  exercise = session.exercise;
+  secondsPerLift = session.secondsPerLift;
+  reps = session.reps;
+  cues = session.cues?.length ? session.cues : exercise.cues;
+  select.value = exercise.id;
+  $("pace").value = secondsPerLift;
+  $("paceValue").textContent = secondsPerLift;
+  resetClimb();
+  planning = false;
+  ui.stage.dataset.phase = "session";
+  $("planForm").hidden = true;
+  $("cards").hidden = true;
+  if (running) {
+    ui.empty.hidden = true;
+    setStatus("away", true);
+  } else {
+    ui.chosenName.textContent = `${exercise.name}, ${reps} reps`;
+    ui.cameraStep.hidden = false;
+    ui.state.textContent = "Ready when you are";
+    ui.hint.textContent = "Start the camera, then step back until the camera sees you.";
+  }
+}
+
+function backToPlanning() {
+  resetClimb();
+  planning = true;
+  ui.stage.dataset.phase = "plan";
+  ui.cameraStep.hidden = true;
+  ui.empty.hidden = false;
+  setStatus("idle", true);
+  updateTone(false, 0);
+  ui.state.textContent = "Ready when you are";
+  ui.hint.textContent = "Tell the coach how you feel, or choose an exercise yourself.";
+  planner.showForm();
+}
 
 function targetSpeed() {
   return Math.abs(exercise.range[1] - exercise.range[0]) / secondsPerLift;
@@ -151,7 +207,7 @@ async function start() {
 function loop() {
   if (!running) return;
   const now = performance.now();
-  if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+  if (!planning && video.readyState >= 2 && video.currentTime !== lastVideoTime) {
     lastVideoTime = video.currentTime;
     const result = landmarker.detectForVideo(video, now);
     processFrame(result, now);
@@ -264,16 +320,16 @@ function processFrame(result, now) {
   settle(raw, now);
 
   if (shown === "climbing" && !finished) {
-    const totalClimbSeconds = REPS * 2 * secondsPerLift;
+    const totalClimbSeconds = reps * 2 * secondsPerLift;
     progress = Math.min(1, progress + (dt * Math.min(speed / targetSpeed(), 1.25)) / totalClimbSeconds);
     climbTime += dt;
     if (progress >= 1) finish();
   }
 
   if (shown === "climbing" && now - cueChangedAt > 8000) {
-    cueIndex = (cueIndex + 1) % exercise.cues.length;
+    cueIndex = (cueIndex + 1) % cues.length;
     cueChangedAt = now;
-    ui.hint.textContent = exercise.cues[cueIndex];
+    ui.hint.textContent = cues[cueIndex];
   }
 
   ui.sloth.style.setProperty("--p", progress.toFixed(4));
@@ -304,7 +360,7 @@ function setStatus(next, force = false) {
   const copy = {
     away: ["Step into view", exercise.setup],
     napping: ["Napping", "Keep moving, just slowly. The sloth only climbs while you move."],
-    climbing: ["Climbing", exercise.cues[cueIndex]],
+    climbing: ["Climbing", cues[cueIndex]],
     fast: ["Too quick", "The sloth is holding on. Slow down and it will climb again."]
   }[next];
   if (!copy) return;
@@ -324,6 +380,30 @@ function finish() {
   ui.hint.textContent = "Take a breath. Notice how your body feels now.";
   ui.sloth.classList.remove("climbing", "napping");
   ui.vineWrap.classList.remove("swaying");
+  askForReflection({
+    exercise_id: exercise.id,
+    seconds_per_lift: secondsPerLift,
+    reps,
+    finished: true,
+    climb_seconds: Math.round(climbTime),
+    rush_count: rushCount
+  });
+}
+
+// Only the compact summary goes to the server, never video or landmarks.
+async function askForReflection(summary) {
+  const token = ++reflectToken;
+  ui.reflection.textContent = "Gemma is reflecting on your climb…";
+  ui.nextTime.textContent = "";
+  try {
+    const { reflection, next_time } = await postJson("/api/reflect", summary);
+    if (token !== reflectToken) return;
+    ui.reflection.textContent = reflection;
+    ui.nextTime.textContent = `Next time: ${next_time}`;
+  } catch (err) {
+    if (token !== reflectToken) return;
+    ui.reflection.textContent = `No reflection this time. ${err.message}`;
+  }
 }
 
 function resetClimb() {
@@ -337,6 +417,9 @@ function resetClimb() {
   activeSide = null;
   sideHistory = { left: [], right: [] };
   ui.done.classList.remove("show");
+  reflectToken++;
+  ui.reflection.textContent = "";
+  ui.nextTime.textContent = "";
   ui.sloth.style.setProperty("--p", "0");
   ui.progressLabel.textContent = "Treetop";
   layoutMeter();

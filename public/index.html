@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sloth Mode</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦥</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Young+Serif&display=swap" rel="stylesheet">
@@ -24,7 +25,7 @@
     <button id="reset">Reset climb</button>
   </header>
 
-  <section class="stage" aria-label="Camera view">
+  <section class="stage" id="stage" data-phase="plan" aria-label="Camera view">
     <video id="video" playsinline muted></video>
     <canvas id="overlay"></canvas>
     <figure class="demo">
@@ -32,15 +33,39 @@
       <figcaption>Follow this pace</figcaption>
     </figure>
     <div class="empty" id="empty">
-      <p id="emptyText">Your camera feed appears here. Nothing is recorded or sent anywhere: the pose model runs in this browser tab.</p>
-      <button class="primary" id="start" disabled>Start camera</button>
+      <form class="plan" id="planForm">
+        <h2>How do you feel?</h2>
+        <label class="plan-label" for="feeling">Tell the coach in your own words, and it will suggest three slow movements.</label>
+        <textarea id="feeling" rows="2" maxlength="500" placeholder="Stiff shoulders after a long day at the laptop"></textarea>
+        <div class="plan-row">
+          <label>Minutes
+            <select id="minutes">
+              <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option>
+              <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+            </select>
+          </label>
+          <button class="primary" type="submit" id="askCoach">Ask the coach</button>
+          <button type="button" id="skipPlan">Choose an exercise myself</button>
+        </div>
+        <p class="plan-status" id="planStatus" role="status"></p>
+      </form>
+      <div class="cards" id="cards" hidden>
+        <h2>Pick one</h2>
+        <div class="card-list" id="cardList"></div>
+        <button type="button" id="backToPlan">Back</button>
+      </div>
+      <div class="camera-step" id="cameraStep" hidden>
+        <p class="chosen" id="chosenName"></p>
+        <p id="emptyText">Your camera feed appears here. Video never leaves this browser tab: the pose model runs right here.</p>
+        <button class="primary" id="start" disabled>Start camera</button>
+      </div>
     </div>
   </section>
 
   <section class="status" aria-live="polite">
     <div>
       <p class="state" id="state" data-tone="idle">Ready when you are</p>
-      <p class="hint" id="hint">Start the camera, then step back until the camera sees you.</p>
+      <p class="hint" id="hint">Tell the coach how you feel, or choose an exercise yourself.</p>
     </div>
     <div class="meter-wrap">
       <div class="meter" id="meter" aria-hidden="true">
@@ -95,7 +120,12 @@
     <div class="done" id="done">
       <h2>You reached the treetop</h2>
       <p id="doneStats"></p>
-      <button class="primary" id="again">Climb again</button>
+      <p class="reflection" id="reflection"></p>
+      <p class="next-time" id="nextTime"></p>
+      <div class="done-actions">
+        <button class="primary" id="again">Climb again</button>
+        <button id="planAgain">Plan another</button>
+      </div>
     </div>
   </section>
 </div>

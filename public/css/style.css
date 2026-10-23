@@ -90,6 +90,43 @@ input[type="range"] { accent-color: var(--marigold); width: 120px; }
   padding: 24px;
 }
 .empty p { max-width: 44ch; margin: 0; color: var(--lichen); }
+.stage[data-phase="plan"] .demo { display: none; }
+.empty { justify-content: safe center; overflow-y: auto; background: var(--leaf); }
+.empty h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0; }
+.plan { display: flex; flex-direction: column; gap: 12px; width: min(100%, 540px); text-align: left; }
+.plan-label { display: block; color: var(--lichen); font-size: 18px; }
+textarea {
+  font: inherit;
+  color: var(--mist);
+  background: var(--canopy);
+  border: 1px solid var(--moss);
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+  resize: vertical;
+}
+textarea::placeholder { color: var(--lichen); opacity: 0.7; }
+textarea:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
+.plan-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.empty .plan-status { min-height: 1.5em; max-width: none; }
+.cards { display: flex; flex-direction: column; align-items: center; gap: 14px; width: min(100%, 920px); }
+.card-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; width: 100%; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  text-align: left;
+  background: var(--canopy);
+  border: 1px solid var(--moss);
+  border-radius: 14px;
+}
+.card:hover { border-color: var(--marigold); }
+.card h3 { font-family: var(--serif); font-weight: 400; font-size: 21px; line-height: 1.2; margin: 0; }
+.card .card-why { color: var(--mist); font-size: 16px; }
+.card .card-meta, .card .card-pos { font-size: 14px; }
+.camera-step { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.empty .chosen { font-family: var(--serif); font-size: 24px; color: var(--mist); }
 
 .status {
   grid-area: status;
@@ -201,9 +238,12 @@ input[type="range"] { accent-color: var(--marigold); width: 120px; }
   padding: 24px;
   z-index: 3;
 }
-.done.show { display: flex; }
+.done.show { display: flex; justify-content: safe center; overflow-y: auto; }
 .done h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0; color: var(--marigold); }
 .done p { margin: 0; color: var(--lichen); }
+.done .reflection { color: var(--mist); font-size: 16px; }
+.done .next-time { font-size: 16px; }
+.done-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 
 @media (prefers-reduced-motion: no-preference) {
   .sloth.climbing svg { animation: bob 1.8s ease-in-out infinite; }

@@ -31,7 +31,9 @@ coach.js                Gemma prompts, JSON schemas and answer checks
 library.json            exercise library, shared by frontend and backend
 public/index.html       markup
 public/css/style.css    styles and design tokens
-public/js/main.js       camera, pose loop, judging, UI
+public/js/main.js       camera, pose loop, judging, session flow
+public/js/planner.js    “How do you feel?” form and Gemma’s exercise cards
+public/js/api.js        requests to the server
 public/js/measure.js    landmark maths (angles, tilt, side picking)
 public/js/demo.js       animated stick-figure demo
 public/js/audio.js      climbing tone and rustle
@@ -44,7 +46,7 @@ public/js/audio.js      climbing tone and rustle
 
 ## Status
 
-Twelve exercises, and the backend with Gemma planning and reflection works. The frontend doesn’t use the API yet.
+The full loop works: tell the coach how you feel, pick one of Gemma’s three suggestions, climb with Gemma’s pace and cues, and get a short reflection at the treetop. Twelve exercises. Next: a richer session summary (nap count, where in the movement you rush).
 
 ## License
 
