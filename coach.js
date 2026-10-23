@@ -40,6 +40,7 @@ async function ask(prompt, schema, temperature) {
         model: MODEL,
         stream: false,
         think: false,
+        keep_alive: "30m",
         format: schema,
         options: { temperature },
         messages: [{ role: "system", content: SYSTEM }, { role: "user", content: prompt }]
