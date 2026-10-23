@@ -135,6 +135,7 @@ export function startDemo(demoBody, getState) {
   const demoStart = performance.now();
   function demoFrame(now) {
     requestAnimationFrame(demoFrame);
+    if (demoBody.closest("[hidden]")) return;
     const { exercise, secondsPerLift } = getState();
     const period = 2 * secondsPerLift * 1000;
     const cycle = (now - demoStart) / period;

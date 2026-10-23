@@ -17,21 +17,21 @@
     <label>Exercise
       <select id="exercise"></select>
     </label>
-    <label>Seconds per lift
-      <input type="range" id="pace" min="4" max="20" step="1" value="10">
-      <span class="pace-value" id="paceValue">10</span>
-    </label>
-    <button id="sound" aria-pressed="true">Sound on</button>
     <button id="reset">Reset climb</button>
   </header>
 
-  <section class="stage" id="stage" data-phase="plan" aria-label="Camera view">
+  <section class="stage" id="stage" aria-label="Camera view">
     <video id="video" playsinline muted></video>
     <canvas id="overlay"></canvas>
-    <figure class="demo">
-      <svg viewBox="0 0 120 170" aria-hidden="true"><g id="demoBody"></g></svg>
-      <figcaption>Follow this pace</figcaption>
-    </figure>
+    <div class="pace-bar">
+      <div class="meter" id="meter" aria-hidden="true">
+        <div class="z-nap" id="zNap"></div>
+        <div class="z-slow" id="zSlow"></div>
+        <div class="z-fast" id="zFast"></div>
+        <div class="marker" id="marker"></div>
+      </div>
+      <div class="meter-labels"><span>Still</span><span>Sloth pace</span><span>Rushing</span></div>
+    </div>
     <div class="empty" id="empty">
       <form class="plan" id="planForm">
         <h2>How do you feel?</h2>
@@ -56,6 +56,10 @@
       </div>
       <div class="camera-step" id="cameraStep" hidden>
         <p class="chosen" id="chosenName"></p>
+        <figure class="demo">
+          <svg viewBox="0 0 120 170" aria-hidden="true"><g id="demoBody"></g></svg>
+          <figcaption>Watch the pace once. Then it’s just you and the sloth.</figcaption>
+        </figure>
         <p id="emptyText">Your camera feed appears here. Video never leaves this browser tab: the pose model runs right here.</p>
         <button class="primary" id="start" disabled>Start camera</button>
       </div>
@@ -63,22 +67,9 @@
   </section>
 
   <section class="status" aria-live="polite">
-    <div>
-      <p class="state" id="state" data-tone="idle">Ready when you are</p>
-      <p class="hint" id="hint">Tell the coach how you feel, or choose an exercise yourself.</p>
-    </div>
-    <div class="meter-wrap">
-      <div class="meter" id="meter" aria-hidden="true">
-        <div class="z-nap" id="zNap"></div>
-        <div class="z-slow" id="zSlow"></div>
-        <div class="z-fast" id="zFast"></div>
-        <div class="marker" id="marker"></div>
-      </div>
-      <div class="meter-labels"><span>Still</span><span>Sloth pace</span><span>Rushing</span></div>
-      <div class="range" aria-hidden="true"><div class="range-fill" id="rangeFill"></div></div>
-      <div class="meter-labels"><span>Start position</span><span>Full movement</span></div>
-      <p class="readout" id="readout">Speed appears once the camera sees you.</p>
-    </div>
+    <p class="state" id="state" data-tone="idle">Ready when you are</p>
+    <p class="hint" id="hint">Tell the coach how you feel, or choose an exercise yourself.</p>
+    <p class="readout" id="readout">Speed appears once the camera sees you.</p>
   </section>
 
   <section class="vine-panel" aria-label="Climbing progress">

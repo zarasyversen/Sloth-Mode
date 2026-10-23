@@ -58,9 +58,7 @@ select, button {
 button { cursor: pointer; }
 button:disabled { opacity: 0.5; cursor: default; }
 button.primary { background: var(--marigold); color: var(--canopy); border-color: var(--marigold); font-weight: 700; }
-button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
-input[type="range"] { accent-color: var(--marigold); width: 120px; }
-.pace-value { color: var(--mist); min-width: 3ch; }
+button:focus-visible, select:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
 
 .stage {
   grid-area: stage;
@@ -81,6 +79,7 @@ input[type="range"] { accent-color: var(--marigold); width: 120px; }
 .empty {
   position: absolute;
   inset: 0;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -90,7 +89,6 @@ input[type="range"] { accent-color: var(--marigold); width: 120px; }
   padding: 24px;
 }
 .empty p { max-width: 44ch; margin: 0; color: var(--lichen); }
-.stage[data-phase="plan"] .demo { display: none; }
 .empty { justify-content: safe center; overflow-y: auto; background: var(--leaf); }
 .empty h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0; }
 .plan { display: flex; flex-direction: column; gap: 12px; width: min(100%, 540px); text-align: left; }
@@ -126,15 +124,12 @@ textarea:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px
 .card .card-why { color: var(--mist); font-size: 16px; }
 .card .card-meta, .card .card-pos { font-size: 14px; }
 .camera-step { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.demo { margin: 0; width: min(220px, 50vw); text-align: center; }
+.demo svg { display: block; width: 100%; height: auto; }
+.demo figcaption { font-size: 16px; color: var(--lichen); }
 .empty .chosen { font-family: var(--serif); font-size: 24px; color: var(--mist); }
 
-.status {
-  grid-area: status;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
-  gap: 8px 28px;
-  align-items: end;
-}
+.status { grid-area: status; }
 .state {
   font-family: var(--serif);
   font-size: 44px;
@@ -144,40 +139,36 @@ textarea:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px
 .state[data-tone="climbing"] { color: var(--marigold); }
 .state[data-tone="fast"] { color: var(--orchid); }
 .hint { margin: 6px 0 0; font-size: 21px; max-width: 52ch; min-height: 2lh; }
-.meter-wrap { display: flex; flex-direction: column; gap: 8px; }
-.meter { position: relative; height: 16px; display: flex; border-radius: 8px; overflow: hidden; }
+.pace-bar {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 18px 8px;
+  background: rgba(23, 40, 31, 0.75);
+  border-radius: 14px;
+}
+.meter { position: relative; height: 26px; display: flex; border-radius: 13px; overflow: hidden; }
 .meter .z-nap { background: var(--moss); }
 .meter .z-slow { background: var(--marigold); }
 .meter .z-fast { background: var(--orchid); opacity: 0.75; }
 .marker {
   position: absolute;
-  top: -5px;
-  width: 4px;
-  height: 26px;
-  margin-left: -2px;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  margin-left: -3px;
+  box-shadow: 0 0 0 2px var(--canopy);
   background: var(--mist);
   border-radius: 2px;
   left: 0;
 }
-.meter-labels { display: flex; justify-content: space-between; font-size: 14px; color: var(--lichen); }
-.readout { font-size: 14px; color: var(--lichen); margin: 0; }
-.range { height: 10px; margin-top: 6px; border-radius: 5px; background: var(--moss); overflow: hidden; }
-.range-fill { height: 100%; width: 0; background: var(--lichen); transition: width 0.1s linear; }
-.demo {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  z-index: 2;
-  margin: 0;
-  width: 132px;
-  padding: 8px 8px 6px;
-  background: rgba(23, 40, 31, 0.85);
-  border: 1px solid var(--moss);
-  border-radius: 14px;
-  text-align: center;
-}
-.demo svg { display: block; width: 100%; height: auto; }
-.demo figcaption { font-size: 13px; color: var(--lichen); }
+.meter-labels { display: flex; justify-content: space-between; font-size: 17px; color: var(--mist); }
+.readout { font-size: 14px; color: var(--lichen); margin: 4px 0 0; }
 
 .vine-panel {
   grid-area: vine;
@@ -261,9 +252,13 @@ textarea:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px
     grid-template-rows: auto;
     grid-template-areas: "head" "stage" "status" "vine";
   }
-  .stage { aspect-ratio: 4 / 3; }
-  .status { grid-template-columns: 1fr; }
+  /* A 4:3 minimum instead of aspect-ratio, so the planning and pace screens can make the stage taller. */
+  .stage { min-height: calc((100vw - 48px) * 0.75); }
+  .empty { position: relative; min-height: 100%; }
   .vine-panel { height: 420px; }
+  .pace-bar { left: 8px; right: 8px; bottom: 8px; padding: 8px 10px 4px; gap: 2px; }
+  .meter { height: 16px; }
+  .meter-labels { font-size: 14px; }
   .state { font-size: 36px; }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

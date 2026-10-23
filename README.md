@@ -36,7 +36,6 @@ public/js/planner.js    “How do you feel?” form and Gemma’s exercise cards
 public/js/api.js        requests to the server
 public/js/measure.js    landmark maths (angles, tilt, side picking)
 public/js/demo.js       animated stick-figure demo
-public/js/audio.js      climbing tone and rustle
 ```
 
 ## API
@@ -46,7 +45,7 @@ public/js/audio.js      climbing tone and rustle
 
 ## Status
 
-The full loop works: tell the coach how you feel, pick one of Gemma’s three suggestions, climb with Gemma’s pace and cues, and get a short reflection at the treetop. Twelve exercises. Next: a richer session summary (nap count, where in the movement you rush).
+The full loop works: tell the coach how you feel, pick one of Gemma’s three suggestions, climb with Gemma’s pace and cues, and get a short reflection at the treetop. Twelve exercises. The end screen and Gemma’s reflection include nap count and where in the movement you tend to rush.
 
 ## License
 

@@ -1,11 +1,11 @@
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 import { px, pointsFor, pickSide, isVisible, measure } from "./measure.js";
 import { startDemo } from "./demo.js";
-import { bindSoundButton, initAudio, updateTone, rustle } from "./audio.js";
 import { initPlanner } from "./planner.js";
 import { postJson } from "./api.js";
 
 const DEFAULT_REPS = 3;
+const DEFAULT_PACE = 10;
 const $ = (id) => document.getElementById(id);
 
 let LIBRARY;
@@ -29,7 +29,7 @@ const ui = {
   zNap: $("zNap"), zSlow: $("zSlow"), zFast: $("zFast"),
   sloth: $("sloth"), vineWrap: $("vineWrap"), progressLabel: $("progressLabel"),
   done: $("done"), doneStats: $("doneStats"), empty: $("empty"), emptyText: $("emptyText"),
-  rangeFill: $("rangeFill"), stage: $("stage"), cameraStep: $("cameraStep"), chosenName: $("chosenName"),
+  cameraStep: $("cameraStep"), chosenName: $("chosenName"),
   reflection: $("reflection"), nextTime: $("nextTime")
 };
 
@@ -39,7 +39,7 @@ let running = false;
 let lastVideoTime = -1;
 let lastFrame = 0;
 let exercise = LIBRARY[0];
-let secondsPerLift = 10;
+let secondsPerLift = DEFAULT_PACE;
 let reps = DEFAULT_REPS;
 let cues = exercise.cues;
 let planning = true;
@@ -77,17 +77,11 @@ select.addEventListener("change", () => {
   resetClimb();
   if (running) setStatus("away", true);
 });
-$("pace").addEventListener("input", (e) => {
-  secondsPerLift = Number(e.target.value);
-  $("paceValue").textContent = secondsPerLift;
-  layoutMeter();
-});
 $("reset").addEventListener("click", resetClimb);
 $("again").addEventListener("click", resetClimb);
 $("planAgain").addEventListener("click", backToPlanning);
 $("start").addEventListener("click", start);
 $("start").disabled = false;
-bindSoundButton($("sound"));
 
 const leaves = $("leaves");
 for (let i = 0; i < 9; i++) {
@@ -109,42 +103,36 @@ startDemo($("demoBody"), () => ({ exercise, secondsPerLift }));
 const planner = initPlanner({
   library: LIBRARY,
   onChoose: beginSession,
-  onSkip: () => beginSession({ exercise, secondsPerLift, reps: DEFAULT_REPS, cues: exercise.cues })
+  onSkip: () => beginSession({ exercise, secondsPerLift: DEFAULT_PACE, reps: DEFAULT_REPS, cues: exercise.cues })
 });
 
-// Set up a session from Gemma’s card (or the current manual choice), then go to the camera.
+// Set up a session from Gemma’s card (or the current manual choice), then show the pace demo once.
+// Judging stays off (planning) until the user presses Start camera or I’m ready.
 function beginSession(session) {
   exercise = session.exercise;
   secondsPerLift = session.secondsPerLift;
   reps = session.reps;
   cues = session.cues?.length ? session.cues : exercise.cues;
   select.value = exercise.id;
-  $("pace").value = secondsPerLift;
-  $("paceValue").textContent = secondsPerLift;
   resetClimb();
-  planning = false;
-  ui.stage.dataset.phase = "session";
   $("planForm").hidden = true;
   $("cards").hidden = true;
-  if (running) {
-    ui.empty.hidden = true;
-    setStatus("away", true);
-  } else {
-    ui.chosenName.textContent = `${exercise.name}, ${reps} reps`;
-    ui.cameraStep.hidden = false;
-    ui.state.textContent = "Ready when you are";
-    ui.hint.textContent = "Start the camera, then step back until the camera sees you.";
-  }
+  ui.chosenName.textContent = `${exercise.name}, ${reps} reps`;
+  ui.emptyText.hidden = running;
+  $("start").textContent = running ? "I’m ready" : "Start camera";
+  ui.cameraStep.hidden = false;
+  ui.empty.hidden = false;
+  ui.state.textContent = "Ready when you are";
+  ui.hint.textContent = running ? "Press I’m ready, then step back until the camera sees you." : "Start the camera, then step back until the camera sees you.";
+  $("start").focus();
 }
 
 function backToPlanning() {
   resetClimb();
   planning = true;
-  ui.stage.dataset.phase = "plan";
   ui.cameraStep.hidden = true;
   ui.empty.hidden = false;
   setStatus("idle", true);
-  updateTone(false, 0);
   ui.state.textContent = "Ready when you are";
   ui.hint.textContent = "Tell the coach how you feel, or choose an exercise yourself.";
   planner.showForm();
@@ -168,7 +156,12 @@ function layoutMeter() {
 layoutMeter();
 
 async function start() {
-  initAudio();
+  if (running) {
+    planning = false;
+    ui.empty.hidden = true;
+    setStatus("away", true);
+    return;
+  }
   ui.emptyText.textContent = "Waking the sloth…";
   $("start").hidden = true;
   try {
@@ -201,6 +194,7 @@ async function start() {
   canvas.height = video.videoHeight;
   drawing = new DrawingUtils(ctx);
   ui.empty.hidden = true;
+  planning = false;
   running = true;
   lastFrame = performance.now();
   setStatus("away", true);
@@ -285,7 +279,6 @@ function settle(raw, now) {
     if (raw === "fast" && shown !== "fast") {
       rushCount++;
       rushThirds[Math.min(2, Math.floor(rangePosition() * 3))]++;
-      rustle();
     }
     // Napping before the first climb is just getting ready, so it doesn’t count.
     if (raw === "napping" && shown !== "napping" && sessionStart !== null && !finished) napCount++;
@@ -343,7 +336,6 @@ function processFrame(result, now) {
   ui.progressLabel.textContent = progress > 0 ? `${Math.round(progress * 100)}%` : "Treetop";
   const { max } = thresholds();
   ui.marker.style.left = `${Math.min(1, speed / max) * 100}%`;
-  ui.rangeFill.style.width = `${rangePosition() * 100}%`;
   if (now - lastReadout > 150) {
     lastReadout = now;
     const side = exercise.measure.sides && activeSide ? `Tracking your ${activeSide} ${exercise.tracks ?? "side"}. ` : "";
@@ -351,7 +343,6 @@ function processFrame(result, now) {
       ? "Speed appears once the camera sees you."
       : `${side}${Math.round(speed)}°/s now, sloth pace is about ${Math.round(targetSpeed())}°/s.`;
   }
-  updateTone(shown === "climbing" && !finished, progress);
 }
 
 // 0 at the start position, 1 at the full movement.

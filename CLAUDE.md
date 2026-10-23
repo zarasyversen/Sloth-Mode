@@ -16,7 +16,7 @@ Guiding principle for the code and the write-up: **MediaPipe sees, my code judge
 
 ## Current state
 
-Working prototype, served from `public/`: `index.html`, `css/style.css` and ES modules in `js/` (`main.js` state/loop/judging/UI, `measure.js` landmark maths, `demo.js`, `audio.js`); the exercise library lives in `library.json` at the root. Run it with `npm start` (`node server.js`, needs Ollama with `gemma4:26b`) and open `http://localhost:8000/` (camera needs localhost or HTTPS).
+Working prototype, served from `public/`: `index.html`, `css/style.css` and ES modules in `js/` (`main.js` state/loop/judging/UI, `measure.js` landmark maths, `demo.js`); the exercise library lives in `library.json` at the root. Run it with `npm start` (`node server.js`, needs Ollama with `gemma4:26b`) and open `http://localhost:8000/` (camera needs localhost or HTTPS).
 
 It already has:
 - Webcam + MediaPipe Pose Landmarker (tasks-vision 0.10.14, lite model, VIDEO mode)
@@ -24,9 +24,10 @@ It already has:
 - Measurement types: `angle` (three landmarks; optional `sides` with auto-pick of the more visible side) and `tilt` (hip midpoint to shoulder midpoint)
 - `range: [start, end]` in degrees (end can be lower than start, as in the squat)
 - Smoothed angle, speed over a 0.5 s window, thresholds relative to target speed (`range / secondsPerLift`), state hysteresis (fast 250 ms, napping 1200 ms)
-- Climbing sloth SVG, sway and nap states, rising tone and rustle sound, end screen with stats
-- Animated stick-figure demo per exercise, driven by the pace slider, mirrored like the camera
-- Range bar showing progress through the movement
+- Climbing sloth SVG, sway and nap states, end screen with stats. No sound (removed after user feedback)
+- Pace comes from Gemma’s card (10 s per lift when choosing an exercise manually); there is no pace slider
+- Animated stick-figure demo per exercise at the session’s pace, mirrored like the camera. Shown once on a “watch the pace” screen before each session, hidden while climbing (user feedback: too much on screen at once)
+- Pace meter (still / sloth pace / rushing) overlaid on the bottom of the camera view. The start-position/full-movement range bar was removed from the UI; the range position is still used for the rush zone
 
 Known gaps: speed only, no smoothness/jerk metric yet. Thresholds are tuned by feel and need real testing.
 
