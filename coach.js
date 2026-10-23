@@ -143,14 +143,14 @@ function checkReflect(answer) {
   return null;
 }
 
-// What each session summary field means. The frontend sends these (step 6); unknown fields are passed through.
+// What each session summary field means. The frontend sends these; unknown fields are passed through.
 const SUMMARY_FIELDS = `- exercise_id: the exercise from the library.
 - seconds_per_lift, reps: the pace and number of reps the user chose.
 - finished: true if the sloth reached the treetop.
 - climb_seconds: time spent moving at sloth pace. total_seconds: whole session length.
 - rush_count: how many times they moved too fast and the sloth had to hold on.
 - nap_count: how many times they stopped long enough for the sloth to nap. Pausing is fine, it isn’t a failure.
-- rush_zone: where within one movement (from start position to full movement) they tended to rush, such as “top third”. It is about the position in the movement, not the time in the session.`;
+- rush_zone: where within one movement (from start position to full movement) they tended to rush: one of the thirds, “spread across the movement”, or “none”. It is about the position in the movement, not the time in the session.`;
 
 export async function reflect(summary) {
   const ex = LIBRARY.find((e) => e.id === summary.exercise_id);

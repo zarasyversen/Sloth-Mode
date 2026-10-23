@@ -53,6 +53,9 @@ let candidateSince = 0;
 let progress = 0;
 let climbTime = 0;
 let rushCount = 0;
+let napCount = 0;
+let rushThirds = [0, 0, 0];
+let sessionStart = null;
 let finished = false;
 let cueIndex = 0;
 let cueChangedAt = 0;
@@ -281,8 +284,11 @@ function settle(raw, now) {
   if (now - candidateSince >= wait) {
     if (raw === "fast" && shown !== "fast") {
       rushCount++;
+      rushThirds[Math.min(2, Math.floor(rangePosition() * 3))]++;
       rustle();
     }
+    // Napping before the first climb is just getting ready, so it doesn’t count.
+    if (raw === "napping" && shown !== "napping" && sessionStart !== null && !finished) napCount++;
     setStatus(raw);
     candidate = null;
   }
@@ -319,11 +325,12 @@ function processFrame(result, now) {
 
   settle(raw, now);
 
+  if (shown === "climbing" && sessionStart === null) sessionStart = now;
   if (shown === "climbing" && !finished) {
     const totalClimbSeconds = reps * 2 * secondsPerLift;
     progress = Math.min(1, progress + (dt * Math.min(speed / targetSpeed(), 1.25)) / totalClimbSeconds);
     climbTime += dt;
-    if (progress >= 1) finish();
+    if (progress >= 1) finish(now);
   }
 
   if (shown === "climbing" && now - cueChangedAt > 8000) {
@@ -336,9 +343,7 @@ function processFrame(result, now) {
   ui.progressLabel.textContent = progress > 0 ? `${Math.round(progress * 100)}%` : "Treetop";
   const { max } = thresholds();
   ui.marker.style.left = `${Math.min(1, speed / max) * 100}%`;
-  const [rs, re] = exercise.range;
-  const through = smoothAngle === null ? 0 : Math.min(1, Math.max(0, (smoothAngle - rs) / (re - rs)));
-  ui.rangeFill.style.width = `${through * 100}%`;
+  ui.rangeFill.style.width = `${rangePosition() * 100}%`;
   if (now - lastReadout > 150) {
     lastReadout = now;
     const side = exercise.measure.sides && activeSide ? `Tracking your ${activeSide} ${exercise.tracks ?? "side"}. ` : "";
@@ -348,6 +353,24 @@ function processFrame(result, now) {
   }
   updateTone(shown === "climbing" && !finished, progress);
 }
+
+// 0 at the start position, 1 at the full movement.
+function rangePosition() {
+  const [rs, re] = exercise.range;
+  return smoothAngle === null ? 0 : Math.min(1, Math.max(0, (smoothAngle - rs) / (re - rs)));
+}
+
+const ZONES = ["the first third, near the start position", "the middle third", "the last third, near the full movement"];
+// Where in the movement most rushes happened, if one third stands out.
+function rushZone() {
+  if (rushCount === 0) return "none";
+  const most = Math.max(...rushThirds);
+  if (most / rushCount < 0.5 || rushThirds.filter((n) => n === most).length > 1) return "spread across the movement";
+  return ZONES[rushThirds.indexOf(most)];
+}
+
+const plural = (n, word) => `${n} ${n === 1 ? word : `${word}s`}`;
+const clock = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, "0")}`;
 
 function setStatus(next, force = false) {
   if (next === shown && !force) return;
@@ -369,11 +392,13 @@ function setStatus(next, force = false) {
   if (next === "climbing") cueChangedAt = performance.now();
 }
 
-function finish() {
+function finish(now) {
   finished = true;
-  const mins = Math.floor(climbTime / 60);
-  const secs = String(Math.round(climbTime % 60)).padStart(2, "0");
-  ui.doneStats.textContent = `${mins}:${secs} of slow climbing. You rushed ${rushCount} ${rushCount === 1 ? "time" : "times"}.`;
+  const totalSeconds = (now - sessionStart) / 1000;
+  const zone = rushZone();
+  const where = rushCount > 1 && zone !== "spread across the movement" ? `, mostly in ${zone}` : "";
+  ui.doneStats.textContent = `${clock(climbTime)} of slow climbing in ${clock(totalSeconds)}. `
+    + `You rushed ${plural(rushCount, "time")}${where}. The sloth napped ${plural(napCount, "time")}.`;
   ui.done.classList.add("show");
   ui.state.textContent = "Treetop reached";
   ui.state.dataset.tone = "climbing";
@@ -386,7 +411,10 @@ function finish() {
     reps,
     finished: true,
     climb_seconds: Math.round(climbTime),
-    rush_count: rushCount
+    total_seconds: Math.round(totalSeconds),
+    rush_count: rushCount,
+    nap_count: napCount,
+    rush_zone: zone
   });
 }
 
@@ -410,6 +438,9 @@ function resetClimb() {
   progress = 0;
   climbTime = 0;
   rushCount = 0;
+  napCount = 0;
+  rushThirds = [0, 0, 0];
+  sessionStart = null;
   finished = false;
   smoothAngle = null;
   history = [];
