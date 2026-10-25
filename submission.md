@@ -35,7 +35,12 @@ One session takes a few minutes:
 
 ## Demo
 
-**TODO:** replace this line with `{% embed <your video URL> %}`
+<img width="1724" height="875" alt="image" src="https://github.com/user-attachments/assets/1b02d8a4-8bdb-4635-8fdb-d504d3ea8df4" />
+<img width="1726" height="869" alt="Skärmavbild 2026-10-25 kl  10 12 47" src="https://github.com/user-attachments/assets/acb53b0a-f9d4-42d7-9a64-ea880113033d" />
+
+<img width="1728" height="1117" alt="sloth" src="https://github.com/user-attachments/assets/5b31c697-9c0c-46f2-aebc-755b14e7283d" />
+<img width="1724" height="877" alt="Skärmavbild 2026-10-25 kl  10 18 34" src="https://github.com/user-attachments/assets/035c4a61-2466-4742-a435-97bff8dbda39" />
+
 
 ## Code
 
@@ -56,7 +61,8 @@ Then open `http://localhost:8000`, tell the coach how you feel, and step back fr
 
 The one rule I set myself: the AI coaches, but it never judges your movement. Judging happens on every frame and has to be fast and fair, so it’s plain code.
 
-[embedded content: Sloth Mode architecture · browser and local Ollama]
+<img width="659" height="350" alt="image" src="https://github.com/user-attachments/assets/4574bc76-67e3-4783-ae98-cf1f8ba1784f" />
+
 
 **MediaPipe sees.** [MediaPipe Pose](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker) is open source and runs in the browser. On every video frame it returns the positions of 33 body landmarks, such as shoulders, elbows, hips and knees.
 
